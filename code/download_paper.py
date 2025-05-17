@@ -6,34 +6,14 @@ import tqdm
 
 # Function to read JSON file
 def read_json_file(file_path):
-    """
-    Read a JSON file and return its content.
     
-    Args:
-        file_path (str): Path to the JSON file
-    
-    Returns:
-        list: List of dictionaries containing the JSON data
-    """
     with open(file_path, 'r', encoding='utf-8') as f:
         data = json.load(f)
     return data
 
 def download_openreview_paper(year,paper_forum_id,paper_link, output_dir):
-    """
-    Download a paper PDF from OpenReview given its ID
-    
-    Args:
-        paper_id (str): Paper ID from OpenReview URL
-        output_dir (str): Directory to save the downloaded PDF
-    
-    Returns:
-        str: Path to downloaded PDF file or error message
-    """
-    try:
-        # Create output directory if it doesn't exist
-        os.makedirs(output_dir, exist_ok=True)
-        
+   
+    try:  
         # Construct the PDF URL
         base_url = "https://openreview.net"
         pdf_url = urljoin(base_url, paper_link)
@@ -57,16 +37,34 @@ def download_openreview_paper(year,paper_forum_id,paper_link, output_dir):
 
 if __name__ == "__main__":
     year = 2023
+    conference = "neurips"
+
+    pp_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    print(f"Parent directory: {pp_dir}")
+
     # Input file path of final data
-    final_data_file_path = f"final_data/neurips_{year}_all_v2_final_dataset.json"
-    final_data = read_json_file(final_data_file_path)
+    data_file_path = f"final_dataset/{conference}_{year}_all_final_dataset.json"
+    input_file_path = os.path.join(pp_dir, data_file_path)
+    print(f"Input file path: {input_file_path}")
+    final_data = read_json_file(input_file_path)
+    print(f"Number of papers in the dataset: {len(final_data)}")
     # Get a list of tuples containing paper_forum_id and paper_link
     paper_links = [(item['forum'], item['paper_pdf_link']) for item in final_data]
     # Example paper ID from the given URL
     
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    output_dir = os.path.join(os.path.dirname(current_dir), "downloaded_papers")
+    output_path = f"pdf_dataset/{conference}/{year}"
+    output_dir = os.path.join(pp_dir, output_path)
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"Output directory: {output_dir}")
+    list_of_files = os.listdir(output_dir)
+    print(f"List of files in output directory: {len(list_of_files)}")
+    output_paper_ids = [paper_id.split("_")[1] for paper_id in list_of_files]
+    # print(f"List of paper IDs in output directory: {output_paper_ids}")
 
     # Loop through each paper link and download the paper using tqdm
     for paper_forum_id, paper_link in tqdm.tqdm(paper_links[:5], desc="Downloading papers"):
-        downloaded_path = download_openreview_paper(year,paper_forum_id, paper_link, output_dir)
+        if paper_forum_id not in output_paper_ids:
+            downloaded_path = download_openreview_paper(year,paper_forum_id, paper_link, output_dir)
+
+    list_of_files = os.listdir(output_dir)
+    print(f"List of files in output directory: {len(list_of_files)}")
